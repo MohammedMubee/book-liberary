@@ -3,10 +3,10 @@ const express =require('express')
 
 const router = express.Router();
 
-const usersRouter =require( './users.route');
-const bookRouter = require( './book.route');
+const usersRouter =require( './user.router');
+const bookRouter = require( './book.router');
 
-router.use('/user'.usersRouter)
-router.use('/book'.bookRouter)
+router.use('/user',usersRouter)
+router.use('/book',bookRouter)
 
 module . exports = router;

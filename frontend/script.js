@@ -2,7 +2,7 @@ async function login() {
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
 
-    const response = await fetch('http://localhost:3000/logins/login', {
+    const response = await fetch('http://localhost:3000/api/user/login', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -45,8 +45,9 @@ function logout() {
 
 async function fetchBooksData() {
     try {
-        const response = await fetch('http://localhost:3000/books/allbooks'); 
+        const response = await fetch('http://localhost:3000/api/book/allbooks'); 
         const data = await response.json();
+        console.log(data)
         return data;
     } catch (error) {
         console.error('Error fetching data:', error);
@@ -94,10 +95,9 @@ async function updateBookList() {
 }
 
 $('#books-tab').on('shown.bs.tab', updateBookList);
+updateBookList()
 
 
-
-fetchAndDisplayBooks();
 
 document.getElementById('addBookForm').addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -112,7 +112,7 @@ document.getElementById('addBookForm').addEventListener('submit', async (event) 
     };
 
     try {
-        const response = await fetch('http://localhost:3000/books/addBook', {
+        const response = await fetch('http://localhost:3000/api/book/addBook', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -133,7 +133,7 @@ document.getElementById('addBookForm').addEventListener('submit', async (event) 
 
 async function fetchAndDisplayBooks() {
     try {
-        const response = await fetch('http://localhost:3000/books/addBook');
+        const response = await fetch('http://localhost:3000/api/book/allbooks');
         const books = await response.json();
 
         const bookListContainer = document.getElementById('all-books');
@@ -161,7 +161,8 @@ async function fetchAndDisplayBooks() {
     }
 }
 
-fetchAndDisplayBooks();
+
+
 
 async function fetchAndDisplayUserBooks() {
     console.log('fetchAndDisplayUserBooks function is being executed');
@@ -176,7 +177,7 @@ async function fetchAndDisplayUserBooks() {
     }
   
     try {
-      const response = await fetch(`http://localhost:3000/books/users/${username}`);
+      const response = await fetch(`http://localhost:3000/api/user/login`);
       const data = await response.json();
   
       if (!response.ok) {
@@ -246,7 +247,11 @@ updateBookList();
 
 async function fetchAndDisplayBooks() {
     try {
-        const response = await fetch('http://localhost:3000/books/allbooks');
+        const response = await fetch('http://localhost:3000/api/book/allbooks');
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch books');
+        }
         const books = await response.json();
 
         const bookListContainer = document.getElementById('all-books'); 
@@ -287,7 +292,9 @@ async function fetchAndDisplayBooks() {
     }
 }
 
-fetchAndDisplayBooks();
+document.addEventListener('DOMContentLoaded', fetchAndDisplayBooks);
+
+
 
 document.getElementById('addBookForm').addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -303,7 +310,7 @@ document.getElementById('addBookForm').addEventListener('submit', async (event) 
     div.innerHTML=''
 
     try {
-        const response = await fetch('http://localhost:3000/books/addBook', {
+        const response = await fetch('http://localhost:3000/api/book/addbook', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -338,12 +345,11 @@ addToCartButtons.forEach(button => {
 
     if (!username) {
       console.error('Username not found in local storage. Please log in.');
-      // Handle the scenario where the user is not logged in
       return;
     }
 
     try {
-      const response = await fetch('/booklist', {
+      const response = await fetch('http://localhost:3000/api/books/:username', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -357,17 +363,13 @@ addToCartButtons.forEach(button => {
       if (!response.ok) {
         const errorData = await response.json();
         console.error('Error:', errorData.error);
-        // Handle the specific error scenario
         return;
       }
 
       const responseData = await response.json();
       console.log('Book added to cart:', responseData);
-      // Handle the successful addition to cart scenario
     } catch (error) {
       console.error('Error:', error);
-      // Handle general error scenario
     }
   });
 });
-
