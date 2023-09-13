@@ -1,16 +1,29 @@
-const fs = require('fs');
+const User = require('../models/usernameSchema'); 
+const Book = require('../models/bookSchema'); 
 
-let users = []
-const userData = JSON.parse(fs.readFileSync('username.json', 'utf8'));
-const books = JSON.parse(fs.readFileSync('book.json','utf-8'))
 
-exports.loginUser = (req, res) => {
+exports.singup = async (req,res) =>{
+  try{
+    const {username,password} = req.body;
+    const sigin = await User.create({username,password})
+    if(sigin){
+      res.json({success:true, message :'sigup successfl'})
+    }else{
+      res.status(401).json({success:false, message:'invalid credentials'});
+    }
+  }catch(error){
+    console.error(message = "internal server is error")
+
+  }
+
+  
+}
+
+exports.loginUser = async (req, res) => {
   try {
     console.log('Received login request:', req.body);
     const { username, password } = req.body;
-
-   
-    const user = userData.find((u) => u.username === username && u.password === password);
+    const user = await User.findOne({ username, password });
 
     if (user) {
       res.json({ success: true, message: 'Login successful' });
@@ -23,31 +36,30 @@ exports.loginUser = (req, res) => {
   }
 };
 
-
-exports.getUserBooks = (req, res) => {
+exports.getUserBooks = async (req, res) => {
   const { username } = req.params;
-  const user = userData.find((u) => u.username === username);
 
-  if (user) {
-    const userBooks = user.books.map((bookId) => {
-      const book = books.find((b) => b.id === bookId);
-      if (book) {
-        return {
-          id: book.id,
-          title: book.title,
-          author: book.author,
-          description: book.description,
-          coverImage: book.coverImage,
-        };
-      }
-      return null; 
-    });
+  try {
+   
+    const user = await User.findOne({ username });
 
-    const validUserBooks = userBooks.filter((book) => book !== null);
+    if (user) {
+      const userBooks = await Book.find({ id: { $in: user.books } });
 
-    res.json({ success: true, books: validUserBooks });
-  } else {
-    res.status(404).json({ success: false, message: 'User not found' });
+      const transformedBooks = userBooks.map((book) => ({
+        id: book.id,
+        title: book.title,
+        author: book.author,
+        description: book.description,
+        coverImage: book.coverImage,
+      }));
+
+      res.json({ success: true, books: transformedBooks });
+    } else {
+      res.status(404).json({ success: false, message: 'User not found' });
+    }
+  } catch (error) {
+    console.error('Error in getUserBooks route:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
-

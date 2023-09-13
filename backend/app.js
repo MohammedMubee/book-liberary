@@ -1,10 +1,13 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const dotenv = require('dotenv');
+const connectdb = require('./configs/db.config')
+const dotenv = require('dotenv').config();
+
+connectdb()
 
 // Load environment variables
-dotenv.config();
+
 
 // Create an instance of Express
 const app = express();
@@ -29,7 +32,6 @@ app.use((err, req, res, next) => {
 
 
 
-// Use your imported routes
 
 
 app.listen(port, () => {

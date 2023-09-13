@@ -1,28 +1,14 @@
-// src/mongoose-config.js
 
-require('dotenv').config(); // Load environment variables from .env
+const mongoose = require("mongoose")
 
-const dbURI = process.env.MONGODB_URI;
+const connectdb =async() =>{
+  try{
+    const conn = await mongoose.connect(process.env.database_url)
+    //console.log(`mongoDB is connected : ${conn.connection.host}`.cyan.underline)
+  } catch (error){
+    console.log(error)
+    process.exit(1)
+  }
+}
 
-// Define Mongoose connection options.
-const dbOptions = {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-};
-
-// Connect to the MongoDB database.
-mongoose.connect(dbURI, dbOptions);
-
-mongoose.connection.on('connected', () => {
-  console.log('Connected to MongoDB');
-});
-
-mongoose.connection.on('error', (err) => {
-  console.error(`MongoDB connection error: ${err}`);
-});
-
-mongoose.connection.on('disconnected', () => {
-  console.log('Disconnected from MongoDB');
-});
-
-module.exports = mongoose;
+module.exports = connectdb;
