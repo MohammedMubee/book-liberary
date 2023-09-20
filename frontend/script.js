@@ -2,7 +2,7 @@ async function login() {
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
 
-    const response = await fetch('http://localhost:3000/api/user/login', {
+    const response = await fetch('http://localhost:3001/api/user/login', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -45,7 +45,7 @@ function logout() {
 
 async function fetchBooksData() {
     try {
-        const response = await fetch('http://localhost:3000/api/book/allbooks'); 
+        const response = await fetch('http://localhost:3001/api/book/allbooks'); 
         const data = await response.json();
         console.log(data)
         return data;
@@ -83,7 +83,7 @@ async function updateBookList() {
                 const bookId = button.getAttribute('data-book-id');
                 const username = localStorage.getItem('username');
                 if (username) {
-                    await addToBookList(username, bookId);
+                    await addToBooklist(username, bookId);
                 } else {
                     console.error('User not logged in');
                 }
@@ -112,7 +112,7 @@ document.getElementById('addBookForm').addEventListener('submit', async (event) 
     };
 
     try {
-        const response = await fetch('http://localhost:3000/api/book/addBook', {
+        const response = await fetch('http://localhost:3001/api/book/addBook', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -133,7 +133,7 @@ document.getElementById('addBookForm').addEventListener('submit', async (event) 
 
 async function fetchAndDisplayBooks() {
     try {
-        const response = await fetch('http://localhost:3000/api/book/allbooks');
+        const response = await fetch('http://localhost:3001/api/book/allbooks');
         const books = await response.json();
 
         const bookListContainer = document.getElementById('all-books');
@@ -161,93 +161,63 @@ async function fetchAndDisplayBooks() {
     }
 }
 
-
-
-
-async function fetchAndDisplayUserBooks() {
-    console.log('fetchAndDisplayUserBooks function is being executed');
-    
-    // Check if the user is logged in
-    const loggedIn = localStorage.getItem('loggedIn');
-    const username = localStorage.getItem('username');
-  
-    if (!loggedIn || !username) {
-      console.log('User is not logged in.');
-      return;
-    }
-  
+async function fetchAndDisplayUserBooks(username) {
     try {
-      const response = await fetch(`http://localhost:3000/api/user/login`);
-      const data = await response.json();
-  
-      if (!response.ok) {
-        console.error('Error:', data.message);
-        return;
-      }
-  
-      const userBooks = data.user.books;
-      console.log('User\'s Books:', userBooks);
-      // Display the user's books as needed
-    } catch (error) {
-      console.error('Error:', error);
-      // Handle the error scenario
-    }
-  }
-  
-  // Call the function to fetch and display user books
-  fetchAndDisplayUserBooks();
-  
+        const response = await fetch(`http://localhost:3001/api/user/books/${username}`);
 
-async function updateBookList() {
-    try {
-        const bookListContainer = document.getElementById('book-list');
-        const booksData = await fetchBooksData();
-        
+        if (!response.ok) {
+            throw new Error('Failed to fetch user books');
+        }
 
-        const bookCardsHTML = booksData.map(book => `
-        <div class="col-md-4 mb-4" id="book-card-${book.id}">
-        <div class="card">
-            <img src="${book.coverImage || './img/images.jpg'}" class="card-img-top" alt="${book.name}">
-            <div class="card-body">
-                <h5 class="card-title">${book.title}</h5>
-                <p class="card-text">Author: ${book.author}</p>
-                <p class="card-text">Id: ${book.id}</p>
-                <p class="card-text">description:${book.description}</p>
-            </div>
-        </div>
-       </div>
-   `);
+        const data = await response.json();
 
-        bookListContainer.innerHTML = bookCardsHTML.join('');
-        
-       
-        const removeFromBookListButtons = document.querySelectorAll('.removeFromBookListBtn');
-        removeFromBookListButtons.forEach(button => {
-            button.addEventListener('click', async () => {
-                const bookId = button.getAttribute('data-book-id');
-                console.log('Clicked bookId:', bookId); 
+        if (data.success) {
+            const userBooks = data.books;
+            const bookListContainer = document.getElementById('book-list');
 
-               
-                await removeFromBookList(bookId);
-                
-             
-                const cardId = `book-card-${bookId}`;
-                const cardToRemove = document.getElementById(cardId);
-                if (cardToRemove) {
-                    cardToRemove.remove();
-                }
+            // Clear the container first
+            bookListContainer.innerHTML = '';
+
+            userBooks.forEach((book) => {
+                const card = document.createElement('div');
+                card.classList.add('col-md-4', 'mb-4');
+
+                card.innerHTML = `
+                    <div class="card">
+                        <img src="${book.coverImage || './img/images.jpg'}" class="card-img-top" alt="${book.title}">
+                        <div class="card-body">
+                            <h5 class="card-title">${book.title}</h5>
+                            <p class="card-text">Author: ${book.author}</p>
+                            <p class="card-text">id: ${book.id}</p>
+                            <p class="card-text">description: ${book.description}</p>
+                        </div>
+                    </div>
+                `;
+
+                bookListContainer.appendChild(card);
             });
-        });
+        } else {
+            console.error(data.message);
+        }
     } catch (error) {
-        console.error('Error updating book list:', error);
+        console.error('Error fetching and displaying user books:', error);
     }
 }
 
-updateBookList();
+
+document.addEventListener('DOMContentLoaded', () => {
+    const username = localStorage.getItem('username'); 
+    if (username) {
+        fetchAndDisplayUserBooks(username);
+    } else {
+        console.error('User not logged in');
+    }
+});
+
 
 async function fetchAndDisplayBooks() {
     try {
-        const response = await fetch('http://localhost:3000/api/book/allbooks');
+        const response = await fetch('http://localhost:3001/api/book/allbooks');
 
         if (!response.ok) {
             throw new Error('Failed to fetch books');
@@ -267,7 +237,7 @@ async function fetchAndDisplayBooks() {
             <div class="card-body">
                 <h5 class="card-title">${book.title}</h5>
                 <p class="card-text">Author: ${book.author}</p>
-                <p class="card-text">ID: ${book.id}</p>
+                <p class="card-text">id: ${book.id}</p>
                 <p class="card-text">description: ${book.description}<p>
                 <button class="btn btn-primary add-to-cart-btn" data-book-id="${book.id}">Add to Cart</button>
             </div>
@@ -278,7 +248,7 @@ async function fetchAndDisplayBooks() {
                 const bookId = book.id; 
                 const username = localStorage.getItem('username');
                 if (username) {
-                    addToBooklist(bookId); 
+                    addToBooklist(bookId,username); 
                 } else {
                     console.error('User not logged in');
                 }
@@ -296,80 +266,71 @@ document.addEventListener('DOMContentLoaded', fetchAndDisplayBooks);
 
 
 
-document.getElementById('addBookForm').addEventListener('submit', async (event) => {
-    event.preventDefault();
 
-    const formData = new FormData(event.target);
 
-    const newBook = {
-        id: formData.get('bookid'),
-        title: formData.get('title'),
-        author: formData.get('author'),
-        description: formData.get('description')
-    };
-    div.innerHTML=''
+document.addEventListener('DOMContentLoaded', () => {
+    const addToCartButtons = document.querySelectorAll('.btn btn-primary add-to-cart-btn'); 
+    addToCartButtons.forEach((button) => {
+        button.addEventListener('click', async (event) => {
+            const bookId = event.target.getAttribute('data-book-id');
+            const username = localStorage.getItem('username'); 
+
+            if (!username) {
+                console.error('User not logged in');
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:3001/api/book/:username`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ id: bookId }), 
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    console.log('Book added to user book list:', data.book);
+                } else {
+                    console.error(data.message);
+                }
+            } catch (error) {
+                console.error('Error adding book to user book list:', error);
+            }
+        });
+    });
+});
+
+// user can add new book to the user book list
+
+async function addToBooklist(bookId,username) {
+    
+    if (!username) {
+        console.error('User not logged in');
+        return;
+    }
 
     try {
-        const response = await fetch('http://localhost:3000/api/book/addbook', {
+        const response = await fetch(`http://localhost:3001/api/book/${username}`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
             },
-            body: JSON.stringify(newBook)
+            body: JSON.stringify({ id: bookId }), 
         });
 
-        if (response.ok) {
-            event.target.reset();
-            fetchAndDisplayBooks();
-            const loggedIn = localStorage.getItem('loggedIn');
-            const userId = localStorage.getItem('userId');
-            if (loggedIn === 'true' && userId) {
-                const userBookList = await getUserBookList(userId);
-                displayUserBooks(userBookList);
-            }
+        const data = await response.json();
+
+        if (data.message === 'Book added to the user\'s collection') {
+            console.log('Book added to the user\'s collection');
         } else {
-            console.error('Error adding book:', response.statusText);
+            console.error(data.message);
         }
     } catch (error) {
-        console.error('Error adding book:', error);
+        console.error('Error adding book to the user\'s collection:', error);
     }
-})
+}
 
-const addToCartButtons = document.querySelectorAll('.add-to-cart-btn');
-addToCartButtons.forEach(button => {
-  button.addEventListener('click', async (event) => {
-    event.preventDefault();
-
-    const bookId = button.getAttribute('data-book-id');
-    const username = localStorage.getItem('username');
-
-    if (!username) {
-      console.error('Username not found in local storage. Please log in.');
-      return;
-    }
-
-    try {
-      const response = await fetch('http://localhost:3000/api/books/:username', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          user: username,
-          bookId: bookId
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Error:', errorData.error);
-        return;
-      }
-
-      const responseData = await response.json();
-      console.log('Book added to cart:', responseData);
-    } catch (error) {
-      console.error('Error:', error);
-    }
-  });
-});
+document.getElementById('addBookButton').addEventListener('click', addBookToCollection);

@@ -8,40 +8,29 @@ const userData = require('../models/usernameSchema');
 
 
 
-function getBooksData() {
+exports.getAllBooks = async (req, res) => {
   try {
-    const rawData = fs.readFileSync('book.json', 'utf-8');
-    return JSON.parse(rawData);
-  } catch (error) {
-    console.error('Error fetching books data:', error);
-    return [];
-  }
-}
-
-function saveBooksData(books) {
-  fs.writeFileSync('book.json', JSON.stringify(books, null, 2));
-}
-
-exports.getAllBooks = async(req, res) => {
-  try{
-    const books = Book.find();
+    const books = await Book.find();
     res.json(books);
-
-  }catch{
-    console.error("error fetching the books ")
-    res.status(505).json({message:"internal server error "})
+  } catch (error) {
+    console.error("Error fetching the books", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
-exports.getBookById = async(req, res) => {
-  const books = Book;
+exports.getBookById = async (req, res) => {
   const bookId = parseInt(req.params.id);
-  const book =  await books.findOne((book) => book.id === bookId);
+  try {
+    const book = await Book.findOne({ id: bookId });
 
-  if (book) {
-    res.json(book);
-  } else {
-    res.status(404).json({ error: 'Book not found' });
+    if (book) {
+      res.json(book);
+    } else {
+      res.status(404).json({ error: 'Book not found' });
+    }
+  } catch (error) {
+    console.error("Error fetching the book by ID", error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 };
 
@@ -59,53 +48,79 @@ exports.addBook = async(req, res) => {
 
 }
 
-
-
-exports.addnewbook = async (req, res) => {
+exports.addNewBook = async (req, res) => {
   const { username } = req.params;
-  const { bookId } = req.body;
+  const { id } = req.body;
+  console.log(username,id,'add new book to users')
 
-  try{
+  try {
+    const user = await userData.findOne({ username });
 
-    const user = userData . findOne({username})
-
-    if(!user){
-      return res.status(404).json({message :'user is not found '})
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
     }
+   
+    const numericBookId = parseInt(id);
 
-    const book = await Book.findOne({id : bookId})
-
-    if(!book){
-      return res.status(404).json({message : "bookid is not found"})
+    if (isNaN(numericBookId)) {
+      return res.status(400).json({ message: 'Invalid book ID' });
     }
+    console.log(`Parsed book ID as numeric: ${numericBookId}`);
 
-    if (user.books.includes(bookId)) {
+    const book = await Book.findOne({ id: numericBookId });
+    if (!book) {
+      return res.status(404).json({ message: 'Book not found' });
+    }
+    console.log(`Found book: ${book}`);
+    console.log(user,'user id is defined')
+
+    if (user.books.includes(numericBookId)) {
       return res.status(400).json({ message: 'Book already exists in the user\'s collection' });
     }
 
-    user.books.push(bookId);
+    user.books.push(numericBookId);
     await user.save();
-    res.json({message :"book already exiting in user\s collection"})
-}catch(error){
-  console.error('error addining book to  the user collection', error)
-  res.status(500).json({error: 'internal server error'})
-
-}
-  
-};
-
-
-exports.bookId = (req, res) => {
-  const books = Book;
-  const bookId = parseInt(req.params.id);
-  const book = books.find(book => book.id === bookId);
-
-  if (book) {
-    res.json(book);
-  } else {
-    res.status(404).json({ error: 'Book not found' });
+    res.json({ message: 'Book added to the user\'s collection' });
+  } catch (error) {
+    console.error('Error adding book to the user\'s collection', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 };
 
+exports.getBookBYname = async (req,res)=>{
+ const {title} = req.params;
+ try{
+  const Book = await Book.findOne({title})
 
+  if(!BookName){
+    return res.status(404).json({message:"book id not found"})
+  }
+  res.status(200).json({ Book });
+ }catch(error){
+  res.status(500).json({error:'internal server error'})
+ }
+}
+
+
+
+exports.userBooklist = async (req, res) => {
+  const { id } = req.params;
+  const { username } = req.body; 
+
+  try {
+    const user = await userData.findOne({username});
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    if (user.books.includes(id)) {
+      return res.status(400).json({ success: false, message: 'Book already in user book list' });
+    }
+    user.books.push(id);
+    await user.save();
+    res.json({ success: true, book:id });
+  } catch (error) {
+    console.error('Error adding book to user book list:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+}
 

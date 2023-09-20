@@ -4,14 +4,14 @@ const mongoose = require('mongoose');
 const bookSchema = new mongoose.Schema({
   id:{
     type : Number,
-    require : true,
-    unique : true
-
+    require:true,
+    unique : true,
+   
   },
   title:{ 
     type : String,
     require : true ,
-    unique : true
+    unique : true,
 
   },
   author:{

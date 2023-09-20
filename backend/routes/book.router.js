@@ -7,8 +7,10 @@ const booksController = require('../controller/book.controller');
 router.get('/allbooks', booksController.getAllBooks);
 router.get('/id/:id', booksController.getBookById);
 router.post('/addBook', booksController.addBook);
-router.post('/:username',booksController.addnewbook);
-router.get('/:bookId',booksController.bookId);
+router.post('/:username',booksController.addNewBook);
+router.get('/GetBook',booksController.getBookBYname)
+router.post('/add-to-book-list/:username',booksController.userBooklist)
+
 
 module.exports = router;
   
